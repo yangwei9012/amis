@@ -55,6 +55,7 @@ exports[`Renderer:anchorNav 1`] = `
             >
               <div
                 class="cxd-AnchorNav-section"
+                data-id="0"
               >
                 <div
                   class="cxd-Panel cxd-Panel--default cxd-Panel--form"
@@ -87,6 +88,7 @@ exports[`Renderer:anchorNav 1`] = `
                       />
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="name"
                         data-role="form-item"
                       >
                         <label
@@ -122,6 +124,7 @@ exports[`Renderer:anchorNav 1`] = `
                       </div>
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="email"
                         data-role="form-item"
                       >
                         <label
@@ -177,6 +180,7 @@ exports[`Renderer:anchorNav 1`] = `
               </div>
               <div
                 class="cxd-AnchorNav-section"
+                data-id="1"
               >
                 <div
                   class="cxd-Panel cxd-Panel--default cxd-Panel--form"
@@ -209,6 +213,7 @@ exports[`Renderer:anchorNav 1`] = `
                       />
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="cname"
                         data-role="form-item"
                       >
                         <label
@@ -244,6 +249,7 @@ exports[`Renderer:anchorNav 1`] = `
                       </div>
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="caddress"
                         data-role="form-item"
                       >
                         <label
@@ -299,6 +305,7 @@ exports[`Renderer:anchorNav 1`] = `
               </div>
               <div
                 class="cxd-AnchorNav-section"
+                data-id="2"
               >
                 <div
                   class="cxd-Panel cxd-Panel--default cxd-Panel--form"
@@ -331,6 +338,7 @@ exports[`Renderer:anchorNav 1`] = `
                       />
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="interest1"
                         data-role="form-item"
                       >
                         <label
@@ -366,6 +374,7 @@ exports[`Renderer:anchorNav 1`] = `
                       </div>
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="interest2"
                         data-role="form-item"
                       >
                         <label
@@ -401,6 +410,7 @@ exports[`Renderer:anchorNav 1`] = `
                       </div>
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="interest3"
                         data-role="form-item"
                       >
                         <label
@@ -436,6 +446,7 @@ exports[`Renderer:anchorNav 1`] = `
                       </div>
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="interest4"
                         data-role="form-item"
                       >
                         <label
@@ -471,6 +482,7 @@ exports[`Renderer:anchorNav 1`] = `
                       </div>
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="interest5"
                         data-role="form-item"
                       >
                         <label
@@ -506,6 +518,7 @@ exports[`Renderer:anchorNav 1`] = `
                       </div>
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="interest6"
                         data-role="form-item"
                       >
                         <label
@@ -632,6 +645,7 @@ exports[`Renderer:anchorNav with children 1`] = `
             >
               <div
                 class="cxd-AnchorNav-section"
+                data-id="0"
               >
                 <div
                   class="cxd-Panel cxd-Panel--default cxd-Panel--form"
@@ -664,6 +678,7 @@ exports[`Renderer:anchorNav with children 1`] = `
                       />
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="name"
                         data-role="form-item"
                       >
                         <label
@@ -699,6 +714,7 @@ exports[`Renderer:anchorNav with children 1`] = `
                       </div>
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="email"
                         data-role="form-item"
                       >
                         <label
@@ -754,6 +770,7 @@ exports[`Renderer:anchorNav with children 1`] = `
               </div>
               <div
                 class="cxd-AnchorNav-section"
+                data-id="0-0"
               >
                 <div
                   class="cxd-Panel cxd-Panel--default cxd-Panel--form"
@@ -786,6 +803,7 @@ exports[`Renderer:anchorNav with children 1`] = `
                       />
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="cname1"
                         data-role="form-item"
                       >
                         <label
@@ -821,6 +839,7 @@ exports[`Renderer:anchorNav with children 1`] = `
                       </div>
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="caddress1"
                         data-role="form-item"
                       >
                         <label
@@ -876,6 +895,7 @@ exports[`Renderer:anchorNav with children 1`] = `
               </div>
               <div
                 class="cxd-AnchorNav-section"
+                data-id="0-1"
               >
                 <div
                   class="cxd-Panel cxd-Panel--default cxd-Panel--form"
@@ -908,6 +928,7 @@ exports[`Renderer:anchorNav with children 1`] = `
                       />
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="cname2"
                         data-role="form-item"
                       >
                         <label
@@ -943,6 +964,7 @@ exports[`Renderer:anchorNav with children 1`] = `
                       </div>
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="caddress2"
                         data-role="form-item"
                       >
                         <label
@@ -998,6 +1020,7 @@ exports[`Renderer:anchorNav with children 1`] = `
               </div>
               <div
                 class="cxd-AnchorNav-section"
+                data-id="1"
               >
                 <div
                   class="cxd-Panel cxd-Panel--default cxd-Panel--form"
@@ -1030,6 +1053,7 @@ exports[`Renderer:anchorNav with children 1`] = `
                       />
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="cname"
                         data-role="form-item"
                       >
                         <label
@@ -1065,6 +1089,7 @@ exports[`Renderer:anchorNav with children 1`] = `
                       </div>
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="caddress"
                         data-role="form-item"
                       >
                         <label
@@ -1164,6 +1189,7 @@ exports[`Renderer:anchorNav with horizontal 1`] = `
             >
               <div
                 class="cxd-AnchorNav-section"
+                data-id="0"
               >
                 <div
                   class="cxd-Panel cxd-Panel--default cxd-Panel--form"
@@ -1196,6 +1222,7 @@ exports[`Renderer:anchorNav with horizontal 1`] = `
                       />
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="name"
                         data-role="form-item"
                       >
                         <label
@@ -1231,6 +1258,7 @@ exports[`Renderer:anchorNav with horizontal 1`] = `
                       </div>
                       <div
                         class="cxd-Form-item cxd-Form-item--normal"
+                        data-amis-name="email"
                         data-role="form-item"
                       >
                         <label

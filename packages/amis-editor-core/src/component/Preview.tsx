@@ -1,4 +1,12 @@
-import {render, toast, resolveRenderer, Modal, Icon, resizeSensor} from 'amis';
+import {
+  render,
+  toast,
+  resolveRenderer,
+  Modal,
+  Icon,
+  resizeSensor,
+  Spinner
+} from 'amis';
 import React, {Component} from 'react';
 import cx from 'classnames';
 import {autobind, guid, noop, reactionWithOldValue} from '../util';
@@ -39,6 +47,9 @@ export interface PreviewProps {
   autoFocus?: boolean;
 
   toolbarContainer?: () => any;
+
+  readonly?: boolean;
+  ref?: any;
 }
 
 export interface PreviewState {
@@ -130,14 +141,16 @@ export default class Preview extends Component<PreviewProps> {
     () => [this.getHighlightNodes(), this.props.store.activeId],
     ([ids]: [Array<string>], oldValue: [Array<string>]) => {
       const store = this.props.store;
-      requestAnimationFrame(() => {
-        this.calculateHighlightBox(ids);
-      });
+      // requestAnimationFrame(() => {
+      //   this.calculateHighlightBox(ids);
+      // });
+      store.activeHighlightNodes(ids);
       let oldIds = oldValue?.[0];
 
       if (Array.isArray(oldIds)) {
         oldIds = oldIds.filter(id => !~ids.indexOf(id));
-        store.resetHighlightBox(oldIds);
+        store.deActiveHighlightNodes(oldIds);
+        // store.resetHighlightBox(oldIds);
       }
     }
   );
@@ -445,6 +458,23 @@ export default class Preview extends Component<PreviewProps> {
   }
 
   @autobind
+  handleWidgetsDragEnter(e: React.DragEvent) {
+    const target = e.target as HTMLElement;
+    const dom = target.closest(`[data-node-id][data-node-region].region-tip`);
+
+    if (!dom) {
+      return;
+    }
+
+    e.preventDefault();
+    const manager = this.props.manager;
+    const id = dom.getAttribute('data-node-id')!;
+    const region = dom.getAttribute('data-node-region')!; // 大纲树中的容器节点
+
+    id && region && manager.dnd.switchToRegion(e.nativeEvent, id, region);
+  }
+
+  @autobind
   getCurrentTarget() {
     const isMobile = this.props.isMobile;
     if (isMobile) {
@@ -495,6 +525,7 @@ export default class Preview extends Component<PreviewProps> {
       autoFocus,
       toolbarContainer,
       appLocale,
+      ref,
       ...rest
     } = this.props;
 
@@ -516,6 +547,7 @@ export default class Preview extends Component<PreviewProps> {
           className,
           isMobile ? 'is-mobile-body' : 'is-pc-body'
         )}
+        ref={ref}
       >
         <div
           key={
@@ -532,7 +564,11 @@ export default class Preview extends Component<PreviewProps> {
           ref={this.contentsRef}
         >
           <div className="ae-Preview-inner">
-            {isMobile ? (
+            {!store.ready ? (
+              <div className="ae-Preview-loading">
+                <Spinner overlay size="lg" />
+              </div>
+            ) : isMobile ? (
               <IFramePreview
                 {...rest}
                 key="mobile"
@@ -570,7 +606,11 @@ export default class Preview extends Component<PreviewProps> {
           )}
         </div>
 
-        <div className="ae-Preview-widgets" id="aePreviewHighlightBox">
+        <div
+          onDragEnter={this.handleWidgetsDragEnter}
+          className="ae-Preview-widgets"
+          id="aePreviewHighlightBox"
+        >
           {store.highlightNodes.map(node => (
             <HighlightBox
               node={node}
@@ -581,9 +621,11 @@ export default class Preview extends Component<PreviewProps> {
               toolbarContainer={toolbarContainer}
               onSwitch={this.handleNavSwitch}
               manager={manager}
+              readonly={this.props.readonly}
             >
               {node.childRegions.map(region =>
                 !node.memberImmutable(region.region) &&
+                !this.props.readonly &&
                 store.isRegionActive(region.id, region.region) ? (
                   <RegionHighlightBox
                     manager={manager}
@@ -636,9 +678,11 @@ class SmartPreview extends React.Component<SmartPreviewProps> {
             item => !item.isRegion && item.clickable
           );
           if (first && isAlive(store)) {
-            const region = first.childRegions.find(
-              (i: any) => i.region
+            let region = first.childRegions.find(
+              (item: any) => item.region === 'body'
             )?.region;
+            region =
+              region ?? first.childRegions.find((i: any) => i.region)?.region;
             store.setActiveId(first.id, region);
           }
         }
@@ -684,7 +728,11 @@ class SmartPreview extends React.Component<SmartPreviewProps> {
             locale: appLocale,
             editorDialogMountNode: this.getDialogMountRef
           },
-          env
+          {
+            ...env,
+            session: editable ? 'edit-mode' : 'preview-mode',
+            enableAMISDebug: !editable
+          }
         )}
       </div>
     );

@@ -27,8 +27,8 @@ import {isAlive} from 'mobx-state-tree';
 import {observer} from 'mobx-react';
 import hoistNonReactStatic from 'hoist-non-react-statics';
 import {withRootStore} from '../WithRootStore';
-import {FormBaseControl, FormItemWrap} from './Item';
-import {Api} from '../types';
+import {FormBaseControl, FormItemConfig, FormItemWrap} from './Item';
+import {Api, DataChangeReason} from '../types';
 import {TableStore} from '../store/table';
 import pick from 'lodash/pick';
 import {
@@ -75,21 +75,26 @@ export interface ControlOutterProps extends RendererProps {
     value: any,
     name: string,
     submit?: boolean,
-    changePristine?: boolean
+    changePristine?: boolean,
+    changeReason?: DataChangeReason
   ) => void;
   formItemDispatchEvent: (type: string, data: any) => void;
   formItemRef?: (control: any) => void;
 }
 
 export interface ControlProps {
-  onBulkChange?: (values: Object) => void;
+  onBulkChange?: (
+    values: Object,
+    submitOnChange?: boolean,
+    changeReason?: DataChangeReason
+  ) => void;
   onChange?: (value: any, name: string, submit: boolean) => void;
   store: IIRendererStore;
 }
 
 export function wrapControl<
   T extends React.ComponentType<React.ComponentProps<T> & ControlProps>
->(ComposedComponent: T) {
+>(config: Omit<FormItemConfig, 'component'>, ComposedComponent: T) {
   type OuterProps = JSX.LibraryManagedAttributes<
     T,
     Omit<React.ComponentProps<T>, keyof ControlProps>
@@ -171,7 +176,9 @@ export function wrapControl<
             this.validate = this.validate.bind(this);
             this.flushChange = this.flushChange.bind(this);
             this.renderChild = this.renderChild.bind(this);
-            let name = this.props.$schema.name;
+            let name =
+              this.props.$schema.name ||
+              (ComposedComponent.defaultProps as Record<string, unknown>)?.name;
 
             // 如果 name 是表达式
             // 扩充 each 用法
@@ -187,7 +194,7 @@ export function wrapControl<
             const model = rootStore.addStore({
               id: guid(),
               path: this.props.$path,
-              storeType: FormItemStore.name,
+              storeType: config.formItemStoreType || FormItemStore.name,
               parentId: store?.id,
               name,
               colIndex: colIndex !== undefined ? colIndex : undefined,
@@ -535,7 +542,9 @@ export function wrapControl<
                 formItem.removeSubFormItem(this.model);
 
               this.model.clearValueOnHidden &&
-                this.model.form?.deleteValueByName(this.model.name);
+                this.model.form?.deleteValueByName(this.model.name, {
+                  type: 'hide'
+                });
 
               isAlive(rootStore) && rootStore.removeStore(this.model);
             }
@@ -691,7 +700,10 @@ export function wrapControl<
               );
             }
 
-            this.model.changeTmpValue(value, 'input');
+            this.model.changeTmpValue(
+              value,
+              type === 'formula' ? 'formulaChanged' : 'input'
+            );
 
             if (changeImmediately || conrolChangeImmediately || !formInited) {
               this.emitChange(submitOnChange);
@@ -727,17 +739,21 @@ export function wrapControl<
 
             const model = this.model;
             const value = this.model.tmpValue;
-            const oldValue = model.extraName
-              ? [
-                  getVariable(data, model.name, false),
-                  getVariable(data, model.extraName, false)
-                ]
-              : getVariable(data, model.name, false);
+            let oldValue: any = undefined;
+            // 受控的因为没有记录上一次 props 下发的 value，所以不做比较
+            if (!model.isControlled) {
+              oldValue = model.extraName
+                ? [
+                    getVariable(data, model.name, false),
+                    getVariable(data, model.extraName, false)
+                  ]
+                : getVariable(data, model.name, false);
 
-            if (
-              model.extraName ? isEqual(oldValue, value) : oldValue === value
-            ) {
-              return;
+              if (
+                model.extraName ? isEqual(oldValue, value) : oldValue === value
+              ) {
+                return;
+              }
             }
 
             if (type !== 'input-password') {
@@ -768,12 +784,44 @@ export function wrapControl<
               return;
             }
 
+            const changeReason: DataChangeReason = {
+              type: 'input'
+            };
+
+            if (model.changeMotivation === 'formulaChanged') {
+              changeReason.type = 'formula';
+            } else if (
+              model.changeMotivation === 'initialValue' ||
+              model.changeMotivation === 'formInited' ||
+              model.changeMotivation === 'defaultValue'
+            ) {
+              changeReason.type = 'init';
+            }
+
             if (model.extraName) {
               const values = model.splitExtraValue(value);
-              onChange?.(values[0], model.name);
-              onChange?.(values[1], model.extraName, submitOnChange === true);
+              onChange?.(
+                values[0],
+                model.name,
+                undefined,
+                undefined,
+                changeReason
+              );
+              onChange?.(
+                values[1],
+                model.extraName,
+                submitOnChange === true,
+                undefined,
+                changeReason
+              );
             } else {
-              onChange?.(value, model.name, submitOnChange === true);
+              onChange?.(
+                value,
+                model.name,
+                submitOnChange === true,
+                undefined,
+                changeReason
+              );
             }
             this.checkValidate();
           }

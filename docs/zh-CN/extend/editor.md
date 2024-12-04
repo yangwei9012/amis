@@ -259,7 +259,7 @@ schema
 - `docLink?: string` 组件文档链接
 - `previewSchema?: any` 用来生成预览图
 - `tags ?:string | Array<string>` 分类, 决定会在哪个 tab 下面显示的
-- `scaffold ?: any` 当编辑讲此组件拖入时，默认的配置项是啥
+- `scaffold ?: any` 在编辑器中拖入该组件时生成的默认配置项
 - `scaffolds ?: Array<any>` 脚手架也可以是多个，比如 Grid 组件，两栏，三栏组件都是用 grid 构建的，只是拖入时的初始配置不一样。
 - `$schema?: string` json schema 定义。如： `/schemas/UnkownSchema.json` 目前这个不支持自定义，只有内置渲染器才有这些信息。
 - `isBaseComponent?: boolean` 是否为内置渲染器，决定组建列表出现在内置 tab 下还是自定义 tab 下。
@@ -410,7 +410,7 @@ regions: Array<RegionConfig> = [
 ];
 ```
 
-插件内部会根据这个这个信息，自动在 `render('body', body as any, {disabled})` 的地方包裹个 `RegionWrapper`。这种方式主要是通过篡改 `this.props.render` 方法实现的。
+插件内部会根据这个信息，自动在 `render('body', body as any, {disabled})` 的地方包裹个 `RegionWrapper`。这种方式主要是通过篡改 `this.props.render` 方法实现的。
 
 再看个复杂点的情况如 `Form` 的 `actions` 区块输出。
 

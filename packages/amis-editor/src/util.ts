@@ -373,6 +373,29 @@ export const TREE_BASE_EVENTS = (schema: any) => {
         ];
       }
     },
+    {
+      eventName: 'itemClick',
+      eventLabel: '节点点击',
+      description: '点击节点触发',
+      dataSchema: (manager: EditorManager) => {
+        const {value} = resolveOptionEventDataSchame(manager);
+
+        return [
+          {
+            type: 'object',
+            properties: {
+              data: {
+                type: 'object',
+                title: '数据',
+                properties: {
+                  value
+                }
+              }
+            }
+          }
+        ];
+      }
+    },
     ...OPTION_EDIT_EVENTS,
     {
       eventName: 'deferLoadFinished',
@@ -484,3 +507,9 @@ export function _isModelComp(schema: Record<string, any>): boolean {
 
   return extraEvaluation;
 }
+
+export const getOwnValue = (obj: any, key: string) => {
+  if (obj && obj.hasOwnProperty(key)) {
+    return obj[key];
+  }
+};

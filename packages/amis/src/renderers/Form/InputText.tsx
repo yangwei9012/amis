@@ -323,7 +323,7 @@ export default class TextControl extends React.PureComponent<
         inputValue: pristineVal
       },
       () => {
-        this.focus();
+        //this.focus();
         this.loadAutoComplete();
       }
     );
@@ -361,7 +361,7 @@ export default class TextControl extends React.PureComponent<
         inputValue: resetValue
       },
       () => {
-        this.focus();
+        //this.focus();
         this.loadAutoComplete();
       }
     );
@@ -1211,7 +1211,7 @@ export default class TextControl extends React.PureComponent<
         });
 
     return (
-      <div className={classNames}>
+      <div className={classNames} style={style}>
         {addOn && addOn.position === 'left' ? addOnDom : null}
         {body}
         {addOn && addOn.position !== 'left' ? addOnDom : null}
@@ -1251,11 +1251,11 @@ export default class TextControl extends React.PureComponent<
               {
                 key: 'inputControlClassName',
                 weights: {
-                  active: {
-                    pre: `${ns}TextControl.is-focused > .inputControlClassName-${id?.replace(
-                      'u:',
-                      ''
-                    )}, `
+                  focused: {
+                    parent: `.${ns}TextControl.is-focused`
+                  },
+                  disabled: {
+                    parent: `.${ns}TextControl.is-disabled`
                   }
                 }
               }
@@ -1278,11 +1278,12 @@ export default class TextControl extends React.PureComponent<
                   hover: {
                     inner: 'input'
                   },
-                  active: {
-                    pre: `${ns}TextControl.is-focused > .inputControlClassName-${id?.replace(
-                      'u:',
-                      ''
-                    )}, `,
+                  focused: {
+                    parent: `.${ns}TextControl.is-focused`,
+                    inner: 'input'
+                  },
+                  disabled: {
+                    parent: `.${ns}TextControl.is-disabled`,
                     inner: 'input'
                   }
                 }
@@ -1325,14 +1326,10 @@ export function mapItemIndex(
 }
 
 @OptionsControl({
-  type: 'input-text'
+  type: 'input-text',
+  alias: ['input-password', 'native-date', 'native-time', 'native-number']
 })
 export class TextControlRenderer extends TextControl {}
-
-@OptionsControl({
-  type: 'input-password'
-})
-export class PasswordControlRenderer extends TextControl {}
 
 @OptionsControl({
   type: 'input-email',
@@ -1345,18 +1342,3 @@ export class EmailControlRenderer extends TextControl {}
   validations: 'isUrl'
 })
 export class UrlControlRenderer extends TextControl {}
-
-@OptionsControl({
-  type: 'native-date'
-})
-export class NativeDateControlRenderer extends TextControl {}
-
-@OptionsControl({
-  type: 'native-time'
-})
-export class NativeTimeControlRenderer extends TextControl {}
-
-@OptionsControl({
-  type: 'native-number'
-})
-export class NativeNumberControlRenderer extends TextControl {}

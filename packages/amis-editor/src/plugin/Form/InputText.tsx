@@ -1,18 +1,20 @@
 import {
   EditorManager,
   EditorNodeType,
-  registerEditorPlugin
-} from 'amis-editor-core';
-import {
+  RAW_TYPE_MAP,
+  registerEditorPlugin,
   BasePlugin,
-  BasicSubRenderInfo,
-  RendererEventContext,
-  SubRendererInfo,
-  BaseEventContext
+  BaseEventContext,
+  defaultValue,
+  getSchemaTpl,
+  tipedLabel
 } from 'amis-editor-core';
-import {defaultValue, getSchemaTpl, tipedLabel} from 'amis-editor-core';
+import type {SchemaType} from 'amis';
 import {ValidatorTag} from '../../validator';
-import {getEventControlConfig} from '../../renderer/event-control/helper';
+import {
+  getEventControlConfig,
+  getActionCommonProps
+} from '../../renderer/event-control/helper';
 import {inputStateTpl} from '../../renderer/style-control/helper';
 import {resolveOptionType} from '../../util';
 
@@ -185,22 +187,26 @@ export class TextControlPlugin extends BasePlugin {
     {
       actionType: 'clear',
       actionLabel: '清空',
-      description: '清空输入框内容'
+      description: '清空输入框内容',
+      ...getActionCommonProps('clear')
     },
     {
       actionType: 'reset',
       actionLabel: '重置',
-      description: '将值重置为初始值'
+      description: '将值重置为初始值',
+      ...getActionCommonProps('reset')
     },
     {
       actionType: 'reload',
       actionLabel: '重新加载',
-      description: '触发组件数据刷新并重新渲染'
+      description: '触发组件数据刷新并重新渲染',
+      ...getActionCommonProps('reload')
     },
     {
       actionType: 'setValue',
       actionLabel: '赋值',
-      description: '触发组件数据更新'
+      description: '触发组件数据更新',
+      ...getActionCommonProps('setValue')
     }
   ];
 
@@ -416,7 +422,7 @@ export class TextControlPlugin extends BasePlugin {
         body: getSchemaTpl(
           'collapseGroup',
           [
-            getSchemaTpl('style:formItem', {renderer}),
+            getSchemaTpl('theme:formItem'),
             getSchemaTpl('theme:form-label'),
             getSchemaTpl('theme:form-description'),
             {
@@ -424,7 +430,7 @@ export class TextControlPlugin extends BasePlugin {
               body: [
                 ...inputStateTpl(
                   'themeCss.inputControlClassName',
-                  'input.base.default'
+                  '--input-default'
                 )
               ]
             },
@@ -480,6 +486,7 @@ export class TextControlPlugin extends BasePlugin {
     let dataSchema: any = {
       type,
       title: node.schema?.label || node.schema?.name,
+      rawType: RAW_TYPE_MAP[node.schema.type as SchemaType] || 'string',
       originalValue: node.schema?.value // 记录原始值，循环引用检测需要
     };
 

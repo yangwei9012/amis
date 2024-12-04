@@ -32,7 +32,9 @@ import {
   changedEffect,
   evalExpressionWithConditionBuilderAsync,
   normalizeApi,
-  getPropValue
+  getPropValue,
+  CustomStyle,
+  setThemeClassName
 } from 'amis-core';
 import {Icon, Table, BadgeObject, SpinnerExtraProps} from 'amis-ui';
 import type {
@@ -43,7 +45,7 @@ import type {
   RowSelectionProps,
   ExpandableProps,
   AutoFillHeightObject
-} from 'amis-ui/lib/components/table';
+} from 'amis-ui/lib/components/table/index';
 import {
   BaseSchema,
   SchemaObject,
@@ -806,7 +808,7 @@ export default class Table2 extends React.Component<Table2Props, object> {
   }
 
   renderCellSchema(schema: any, props: any) {
-    const {render} = this.props;
+    const {render, store} = this.props;
 
     // Table Cell SchemaObject转化成ReactNode
     if (schema && isObject(schema)) {
@@ -905,6 +907,11 @@ export default class Table2 extends React.Component<Table2Props, object> {
           titleSchema = {type: 'plain'};
         }
 
+        if (column.align) {
+          titleSchema.align = column.align;
+          titleSchema.className = 'flex-1';
+        }
+
         const titleRender = (children: any) => {
           const content = this.renderCellSchema(titleSchema, titleProps);
 
@@ -924,6 +931,15 @@ export default class Table2 extends React.Component<Table2Props, object> {
                 [`${column.className}`]: !!column.className,
                 [`${column.titleClassName}`]: !!column.titleClassName
               })}
+              style={{
+                justifyContent:
+                  (
+                    {
+                      right: 'flex-end',
+                      center: 'center'
+                    } as any
+                  )[column.align] || 'flex-start'
+              }}
             >
               {content}
               {remark}
@@ -960,12 +976,16 @@ export default class Table2 extends React.Component<Table2Props, object> {
               const obj = {
                 children: this.renderCellSchema(column, {
                   data: item.locals,
-                  value: column.name
-                    ? resolveVariable(
-                        column.name,
-                        finalCanAccessSuperData ? item.locals : item.data
-                      )
-                    : column.name,
+                  // 不要下发 value，组件基本上都会自己取
+                  // 如果下发了表单项会认为是 controlled value
+                  // 就不会去跑 extraName 之类的逻辑了
+                  // value: column.name
+                  //   ? resolveVariable(
+                  //       column.name,
+                  //       finalCanAccessSuperData ? item.locals : item.data
+                  //     )
+                  //   : column.name,
+                  btnDisabled: store.dragging,
                   popOverContainer:
                     popOverContainer || this.getPopOverContainer,
                   quickEditFormRef: this.subFormRef,
@@ -987,7 +1007,7 @@ export default class Table2 extends React.Component<Table2Props, object> {
                     );
                   },
                   row: item,
-                  showBadge,
+                  showBadge: showBadge && col === 0,
                   itemBadge,
                   testIdBuilder: itemIDBuilder
                 }),
@@ -1152,9 +1172,12 @@ export default class Table2 extends React.Component<Table2Props, object> {
 
   @autobind
   rowClassName(record: any, rowIndex: number) {
-    const {rowClassNameExpr, store} = this.props;
+    const {rowClassNameExpr, store, themeCss, id, rowClassName} = this.props;
 
     const classnames = [];
+    if (rowClassName) {
+      classnames.push(rowClassName);
+    }
     if (rowClassNameExpr) {
       classnames.push(filter(rowClassNameExpr, {record, rowIndex}));
     }
@@ -1167,6 +1190,14 @@ export default class Table2 extends React.Component<Table2Props, object> {
     if (row?.moved) {
       classnames.push('is-moved');
     }
+    classnames.push(
+      setThemeClassName({
+        ...this.props,
+        name: 'tableRowClassname',
+        id,
+        themeCss
+      })
+    );
     return classnames.join(' ');
   }
 
@@ -1273,7 +1304,7 @@ export default class Table2 extends React.Component<Table2Props, object> {
       {
         data: {
           ...this.props.data,
-          record,
+          ...record,
           rowIndex
         }
       }
@@ -1393,7 +1424,8 @@ export default class Table2 extends React.Component<Table2Props, object> {
       keyField,
       env,
       messages,
-      reload
+      reload,
+      dispatchEvent
     } = this.props;
 
     if (Array.isArray(rows)) {
@@ -1423,6 +1455,7 @@ export default class Table2 extends React.Component<Table2Props, object> {
           errorMessage: messages && messages.saveSuccess
         })
         .then(() => {
+          dispatchEvent('quickSaveSubmitted', data);
           reload && this.reloadTarget(filterTarget(reload, data), data);
         })
         .catch(() => {});
@@ -1442,6 +1475,7 @@ export default class Table2 extends React.Component<Table2Props, object> {
       store
         .saveRemote(quickSaveItemApi, sendData)
         .then(() => {
+          dispatchEvent('quickSaveSubmitted', sendData);
           reload && this.reloadTarget(filterTarget(reload, data), data);
         })
         .catch(() => {
@@ -1546,7 +1580,11 @@ export default class Table2 extends React.Component<Table2Props, object> {
       dispatchEvent
     } = this.props;
     actions = Array.isArray(actions) ? actions.concat() : [];
-    const config = isObject(columnsTogglable) ? columnsTogglable : {};
+    const config = isObject(columnsTogglable)
+      ? columnsTogglable
+      : {
+          align: 'left'
+        };
 
     // 现在默认从crud里传进来的columnsTogglable是boolean类型
     // table单独配置的是SchemaNode类型
@@ -1933,6 +1971,8 @@ export default class Table2 extends React.Component<Table2Props, object> {
       maxKeepItemSelectionLength,
       onRow,
       store,
+      id,
+      themeCss,
       ...rest
     } = this.props;
 
@@ -1974,6 +2014,18 @@ export default class Table2 extends React.Component<Table2Props, object> {
     return (
       <Table
         {...rest}
+        headerClassName={setThemeClassName({
+          ...this.props,
+          name: 'tableHeadClassname',
+          id,
+          themeCss
+        })}
+        bodyClassname={setThemeClassName({
+          ...this.props,
+          name: 'tableBodyClassname',
+          id,
+          themeCss
+        })}
         onRef={this.getRef}
         title={this.renderSchema('title', title, schemaProps)}
         footer={this.renderSchema('footer', footer, schemaProps)}
@@ -2101,7 +2153,15 @@ export default class Table2 extends React.Component<Table2Props, object> {
   }
 
   render() {
-    const {classnames: cx, style, store} = this.props;
+    const {
+      classnames: cx,
+      style,
+      store,
+      themeCss,
+      wrapperCustomStyle,
+      id,
+      env
+    } = this.props;
 
     this.renderedToolbars = []; // 用来记录哪些 toolbar 已经渲染了
 
@@ -2109,14 +2169,82 @@ export default class Table2 extends React.Component<Table2Props, object> {
 
     return (
       <div
-        className={cx('Table-render-wrapper', {
-          'Table--unsaved': !!store.modified || !!store.moved
-        })}
+        className={cx(
+          'Table-render-wrapper',
+          setThemeClassName({
+            ...this.props,
+            name: 'wrapperCustomStyle',
+            id,
+            themeCss: wrapperCustomStyle
+          }),
+          {
+            'Table--unsaved': !!store.modified || !!store.moved
+          }
+        )}
         style={style}
       >
         {this.renderActions('header')}
         {heading}
         {this.renderTable()}
+        <CustomStyle
+          {...this.props}
+          config={{
+            themeCss,
+            classNames: [
+              {
+                key: 'tableHeadClassname',
+                weights: {
+                  default: {
+                    inner: `.${cx('Table-table')} > thead > tr > th`,
+                    important: true
+                  }
+                }
+              },
+              {
+                key: 'tableHeadClassname',
+                weights: {
+                  default: {
+                    inner: `> tr > th`,
+                    important: true
+                  }
+                }
+              },
+              {
+                key: 'tableBodyClassname',
+                weights: {
+                  default: {
+                    inner: `> tbody.${cx('Table-tbody')} > tr  td`
+                  },
+                  hover: {
+                    suf: '> tbody > tr',
+                    inner: `td`,
+                    important: true
+                  }
+                }
+              },
+              {
+                key: 'tableRowClassname',
+                weights: {
+                  default: {
+                    parent: `.${cx('Table-table')} > tbody.${cx(
+                      'Table-tbody'
+                    )}`,
+                    inner: `td.${cx('Table-cell')}`
+                  },
+                  hover: {
+                    parent: `.${cx('Table-table')} > tbody.${cx(
+                      'Table-tbody'
+                    )}`,
+                    inner: `td.${cx('Table-cell')}`
+                  }
+                }
+              }
+            ],
+            wrapperCustomStyle,
+            id
+          }}
+          env={env}
+        />
       </div>
     );
   }

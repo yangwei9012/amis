@@ -1,7 +1,10 @@
 import {toast, normalizeApiResponseData} from 'amis';
 import cloneDeep from 'lodash/cloneDeep';
 import React from 'react';
-import {getEventControlConfig} from '../renderer/event-control/helper';
+import {
+  getEventControlConfig,
+  getActionCommonProps
+} from '../renderer/event-control/helper';
 import {genCodeSchema} from '../renderer/APIAdaptorControl';
 import {
   getI18nEnabled,
@@ -20,12 +23,12 @@ import {
   RendererEventContext,
   RendererInfoResolveEventContext,
   ScaffoldForm,
-  SubRendererInfo
+  SubRendererInfo,
+  defaultValue,
+  getSchemaTpl,
+  JSONPipeIn
 } from 'amis-editor-core';
-import {defaultValue, getSchemaTpl} from 'amis-editor-core';
-import {isObject, JSONPipeIn} from 'amis-editor-core';
-import {setVariable, someTree} from 'amis-core';
-import type {ActionSchema} from 'amis';
+import {setVariable, someTree, normalizeApi} from 'amis-core';
 import type {CRUDCommonSchema} from 'amis';
 import {getEnv} from 'mobx-state-tree';
 import type {
@@ -33,7 +36,6 @@ import type {
   RendererPluginAction,
   RendererPluginEvent
 } from 'amis-editor-core';
-import {normalizeApi} from 'amis-core';
 import isPlainObject from 'lodash/isPlainObject';
 import findLastIndex from 'lodash/findLastIndex';
 
@@ -367,12 +369,14 @@ export class CRUDPlugin extends BasePlugin {
     {
       actionType: 'reload',
       actionLabel: '重新加载',
-      description: '触发组件数据刷新并重新渲染'
+      description: '触发组件数据刷新并重新渲染',
+      ...getActionCommonProps('reload')
     },
     {
       actionLabel: '变量赋值',
       actionType: 'setValue',
-      description: '更新列表记录'
+      description: '更新列表记录',
+      ...getActionCommonProps('setValue')
     }
   ];
 
@@ -389,7 +393,7 @@ export class CRUDPlugin extends BasePlugin {
         title: '新增',
         body: {
           type: 'form',
-          api: 'xxx/create',
+          api: '',
           body: []
         }
       }
@@ -406,7 +410,8 @@ export class CRUDPlugin extends BasePlugin {
         title: '编辑',
         body: {
           type: 'form',
-          api: 'xxx/update',
+          api: '',
+          initApi: '',
           body: []
         }
       }
@@ -423,7 +428,7 @@ export class CRUDPlugin extends BasePlugin {
         title: '查看详情',
         body: {
           type: 'form',
-          api: 'xxx/update',
+          initApi: '',
           body: []
         }
       }
@@ -435,7 +440,7 @@ export class CRUDPlugin extends BasePlugin {
       level: 'link',
       className: 'text-danger',
       confirmText: '确定要删除？',
-      api: 'delete:/xxx/delete',
+      api: '',
       editorSetting: {
         behavior: 'delete'
       }
@@ -446,7 +451,7 @@ export class CRUDPlugin extends BasePlugin {
       label: '批量删除',
       actionType: 'ajax',
       confirmText: '确定要删除？',
-      api: '/xxx/batch-delete',
+      api: '',
       editorSetting: {
         behavior: 'bulkDelete'
       }
@@ -463,7 +468,7 @@ export class CRUDPlugin extends BasePlugin {
         size: 'md',
         body: {
           type: 'form',
-          api: '/xxx/bacth-edit',
+          api: '',
           body: [
             {
               label: '字段1',
@@ -478,7 +483,7 @@ export class CRUDPlugin extends BasePlugin {
     //   type: 'button',
     //   level: 'danger',
     //   label: '删除',
-    //   api: '/xxx/delete-one',
+    //   api: '',
     //   actionType: 'ajax',
     //   confirmText: '确定要删除？'
     // },

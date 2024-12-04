@@ -405,10 +405,15 @@ register('de-DE', {
     'Überprüfungsfehler, position or reason is {{err}}',
   'FormulaEditor.invalidValue':
     'Überprüfungsfehler, reason is Falsches Werteformat',
+  'pullRefresh.normalText': '',
   'pullRefresh.pullingText': 'Zum Aktualisieren nach unten ziehen...',
   'pullRefresh.loosingText': 'Zum Aktualisieren freigeben...',
   'pullRefresh.loadingText': 'Laden...',
   'pullRefresh.successText': 'Laden erfolgreich',
+  'pullRefresh.completedText': 'Keine weiteren Daten',
+  'pullRefresh.crud2NormalText': 'Wischen Sie nach oben, um mehr zu laden',
+  'pullRefresh.crud2PullingText': 'Wischen Sie nach oben, um mehr zu laden',
+  'pullRefresh.crud2LoosingText': 'Freigabe zum Laden',
   'Picker.placeholder': 'Klicken Sie rechts auf das Symbol',
   'UserSelect.edit': 'bearbeiten',
   'UserSelect.save': 'Konservierung',
@@ -442,5 +447,7 @@ register('de-DE', {
   'Signature.undo': 'widerrufen',
   'Signature.confirm': 'bestätigen',
   'Signature.cancel': 'Abbrechen',
-  'Signature.embedLabel': 'Klicken Sie zum Signieren'
+  'Signature.embedLabel': 'Klicken Sie zum Signieren',
+  'QRCode.tooLong':
+    'Der QR-Code-Wert ist zu lang, bitte setzen Sie den Text auf weniger als {{max}} Zeichen.'
 });

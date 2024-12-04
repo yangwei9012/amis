@@ -64,7 +64,9 @@ export interface TableBodyProps extends LocaleProps {
 }
 
 @observer
-export class TableBody extends React.Component<TableBodyProps> {
+export class TableBody<
+  T extends TableBodyProps = TableBodyProps
+> extends React.Component<T> {
   componentDidMount(): void {
     this.props.store.initTableWidth();
   }
@@ -221,7 +223,12 @@ export class TableBody extends React.Component<TableBodyProps> {
     let offset = 0;
 
     // 将列的隐藏对应的把总结行也隐藏起来
-    const result: any[] = items
+    const result: Array<{
+      colSpan?: number;
+      firstColumn: IColumn;
+      lastColumn: IColumn;
+      [propName: string]: any;
+    }> = items
       .map((item, index) => {
         let colIdxs: number[] = [offset + index];
         if (item.colSpan > 1) {
@@ -250,6 +257,7 @@ export class TableBody extends React.Component<TableBodyProps> {
       typeof columns[0]?.type === 'string' &&
       columns[0]?.type.substring(0, 2) === '__'
     ) {
+      result[0].firstColumn = columns[0];
       result[0].colSpan = (result[0].colSpan || 1) + 1;
     }
 
@@ -290,7 +298,7 @@ export class TableBody extends React.Component<TableBodyProps> {
     return (
       <tr
         className={cx(
-          'Table-tr',
+          'Table-table-tr',
           'is-summary',
           position === 'prefix' ? prefixRowClassName : '',
           position === 'affix' ? affixRowClassName : ''
@@ -306,9 +314,13 @@ export class TableBody extends React.Component<TableBodyProps> {
           if (item.align) {
             style.textAlign = item.align;
           }
+          if (item.vAlign) {
+            style.verticalAlign = item.vAlign;
+          }
           const [stickyStyle, stickyClassName] = store.getStickyStyles(
             lastColumn.fixed === 'right' ? lastColumn : firstColumn,
-            store.filteredColumns
+            store.filteredColumns,
+            item.colSpan
           );
           Object.assign(style, stickyStyle);
 
@@ -319,7 +331,7 @@ export class TableBody extends React.Component<TableBodyProps> {
               style={style}
               className={(item.cellClassName || '') + ' ' + stickyClassName}
             >
-              {render(`summary-row/${index}`, item, {
+              {render(`summary-row/${index}`, item as any, {
                 data: ctx
               })}
             </Com>

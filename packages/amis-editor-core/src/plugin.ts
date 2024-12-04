@@ -13,10 +13,12 @@ import {EditorDNDManager} from './dnd';
 import React from 'react';
 import {DiffChange} from './util';
 import find from 'lodash/find';
+import {RAW_TYPE_MAP} from './util';
 import type {RendererConfig, Schema} from 'amis-core';
 import type {MenuDivider, MenuItem} from 'amis-ui/lib/components/ContextMenu';
 import type {BaseSchema, SchemaCollection} from 'amis';
 import type {AsyncLayerOptions} from './component/AsyncLayer';
+import type {SchemaType} from 'amis/lib/Schema';
 
 /**
  * 区域的定义，容器渲染器都需要定义区域信息。
@@ -333,6 +335,9 @@ export interface PopOverForm {
    * @deprecated 改用 body 代替
    */
   controls?: Array<any>;
+
+  initApi?: any;
+  api?: any;
 }
 
 export interface ScaffoldForm extends PopOverForm {
@@ -340,6 +345,7 @@ export interface ScaffoldForm extends PopOverForm {
   stepsBody?: boolean;
   /** 是否可跳过创建向导直接创建 */
   canSkip?: boolean;
+  getSchema?: (value: any) => PopOverForm | Promise<PopOverForm>;
   mode?:
     | 'normal'
     | 'horizontal'
@@ -450,6 +456,8 @@ export interface PanelProps {
   store: EditorStoreType;
   manager: EditorManager;
   popOverContainer?: () => HTMLElement | void;
+  readonly?: boolean;
+  children?: React.ReactNode | ((props: PanelProps) => React.ReactNode);
 }
 
 /**
@@ -500,6 +508,16 @@ export interface RendererInfoResolveEventContext extends EventContext {
 export interface RendererJSONSchemaResolveEventContext
   extends BaseEventContext {
   data: string;
+}
+
+export interface IGlobalEvent {
+  label: string;
+  name: string; // 事件名称，唯一
+  description: string; // 事件描述
+  mapping: Array<{
+    key: string; // 入参名称
+    type: string; // 入参类型
+  }>;
 }
 
 /**
@@ -1027,6 +1045,9 @@ export abstract class BasePlugin implements PluginInterface {
 
   static scene = ['global'];
 
+  name?: string;
+  rendererName?: string;
+
   /**
    * 如果配置里面有 rendererName 自动返回渲染器信息。
    * @param renderer
@@ -1269,13 +1290,20 @@ export abstract class BasePlugin implements PluginInterface {
   ) {
     return {
       type: 'string',
-      schemaType: node.schema.type,
+      rawType: RAW_TYPE_MAP[node.schema.type as SchemaType] || 'string',
       title:
         typeof node.schema.label === 'string'
           ? node.schema.label
           : node.schema.name,
       originalValue: node.schema.value // 记录原始值，循环引用检测需要
     } as any;
+  }
+
+  getKeyAndName() {
+    return {
+      key: this.rendererName,
+      name: this.name
+    };
   }
 }
 

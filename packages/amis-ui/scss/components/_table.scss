@@ -1,6 +1,11 @@
 .#{$ns}Table {
   position: relative;
 
+  // 黑科技，让 scrollIntoView 能够跑正确的位置
+  // margin-top: calc(var(--affix-offset-top) * -1);
+  // padding-top: var(--affix-offset-top);
+  scroll-margin-top: var(--affix-offset-top);
+
   border-radius: var(--Table-borderRadius);
   margin-bottom: var(--gap-md);
 
@@ -219,6 +224,7 @@
     & th,
     & td {
       text-align: left;
+      border-color: transparent;
       border-bottom: var(--Table-borderWidth) solid var(--Table-borderColor);
 
       &.is-sticky {
@@ -252,6 +258,21 @@
       }
       & .label {
         font-size: 90%;
+      }
+
+      & > .#{$ns}Form,
+      & > .#{$ns}Form-item > .#{$ns}Form-control:not(.is-thin) {
+        min-width: var(--Form-control-widthBase);
+
+        &.#{$ns}CheckboxControl,
+        &.#{$ns}SwitchControl,
+        &.#{$ns}RadiosControl {
+          min-width: auto;
+        }
+      }
+
+      .#{$ns}Form-static {
+        min-height: auto;
       }
     }
 
@@ -997,8 +1018,9 @@
     margin-bottom: 0;
 
     > .#{$ns}Table-contentWrap {
-      > .#{$ns}Table-content table {
+      > .#{$ns}Table-content > table {
         border-top: none; // 不然会导致拖动时顶部露出内容
+        min-height: 100%; // 为了让表格占满高度
       }
 
       > .#{$ns}Table-content table thead {

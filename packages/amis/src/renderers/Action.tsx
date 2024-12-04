@@ -707,9 +707,7 @@ export class Action extends React.Component<ActionProps, ActionState> {
   render() {
     const {
       type,
-      icon,
       iconClassName,
-      rightIcon,
       rightIconClassName,
       loadingClassName,
       primary,
@@ -790,6 +788,14 @@ export class Action extends React.Component<ActionProps, ActionState> {
         timeLeft: this.state.timeLeft
       }) as string;
       disabled = true;
+    }
+    let icon = this.props.icon;
+    let rightIcon = this.props.rightIcon;
+    if (typeof icon === 'string') {
+      icon = filter(this.props.icon, data);
+    }
+    if (typeof rightIcon === 'string') {
+      rightIcon = filter(this.props.rightIcon, data);
     }
 
     const iconElement = (
@@ -935,7 +941,8 @@ export type ActionRendererProps = RendererProps &
   };
 
 @Renderer({
-  type: 'action'
+  type: 'action',
+  alias: ['button', 'submit', 'reset']
 })
 // @ts-ignore 类型没搞定
 @withBadge
@@ -1089,18 +1096,3 @@ export class ActionRenderer extends React.Component<ActionRendererProps> {
     );
   }
 }
-
-@Renderer({
-  type: 'button'
-})
-export class ButtonRenderer extends ActionRenderer {}
-
-@Renderer({
-  type: 'submit'
-})
-export class SubmitRenderer extends ActionRenderer {}
-
-@Renderer({
-  type: 'reset'
-})
-export class ResetRenderer extends ActionRenderer {}

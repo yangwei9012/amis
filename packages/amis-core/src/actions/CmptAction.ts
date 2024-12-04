@@ -1,5 +1,5 @@
 import {RendererEvent} from '../utils/renderer-event';
-import {createObject} from '../utils/helper';
+import {createObject, extendObject} from '../utils/helper';
 import {
   RendererAction,
   ListenerAction,
@@ -11,6 +11,7 @@ import {getRendererByName} from '../factory';
 export interface ICmptAction extends ListenerAction {
   actionType: string;
   args: {
+    resetPage?: boolean; // reload时，是否重置分页
     path?: string; // setValue时，目标变量的path
     value?: string | {[key: string]: string}; // setValue时，目标变量的值
     index?: number; // setValue时，支持更新指定索引的数据，一般用于数组类型
@@ -82,14 +83,27 @@ export class CmptAction implements RendererAction {
 
     // 刷新
     if (action.actionType === 'reload') {
-      return component?.reload?.(
+      const result = await component?.reload?.(
         undefined,
         action.data,
         event.data,
         undefined,
         dataMergeMode === 'override',
-        action.args
+        {
+          ...action.args,
+          resetPage: action.args?.resetPage ?? action.resetPage
+        }
       );
+
+      if (result && action.outputVar) {
+        event.setData(
+          extendObject(event.data, {
+            [action.outputVar]: result
+          })
+        );
+      }
+
+      return result;
     }
 
     // 校验表单项
@@ -99,7 +113,9 @@ export class CmptAction implements RendererAction {
     ) {
       const {dispatchEvent, data} = component?.props || {};
       try {
-        const valid = await component?.props.onValidate?.();
+        const valid =
+          (await component?.props.onValidate?.()) ||
+          (await component?.validate?.());
         if (valid) {
           event.setData(
             createObject(event.data, {

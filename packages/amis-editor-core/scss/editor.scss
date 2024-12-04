@@ -53,7 +53,10 @@
 @import './style-control/size';
 @import './style-control/style-common';
 @import './style-control/theme-css-code';
+@import './style-control/single-theme-css-code';
 @import './style-control/flex-layout';
+@import './style-control/col-count';
+@import './style-control/col-size';
 
 /* 组件样式 */
 @import './components/button';
@@ -81,6 +84,7 @@
   min-width: 980px;
   overflow: hidden;
   user-select: none;
+  position: relative;
 
   // 覆盖amis默认top值，避免导致未垂直居中
   .ae-Editor-toolbar svg.icon {
@@ -107,17 +111,37 @@
 }
 
 // 公共组件专有样式
-.ae-Editor-common-config {
+.ae-Editor-common-config,
+.ae-Editor-form-config {
   outline: 2px solid rgba($Editor-hlbox--onActiveConfig-bg, 0.2);
 }
 
 // 公共组件占位样式
 .ae-Editor-common-config div[class*='Wrapper']:empty,
-.ae-Editor-common-config div[class*='Container']:empty {
+.ae-Editor-common-config div[class*='Container']:empty,
+.ae-Editor-form-config div[class*='Wrapper']:empty,
+.ae-Editor-form-config div[class*='Container']:empty {
   margin: 4px;
   min-height: 88px;
   background: #f7f7f8;
   border: 1px dashed rgb(206, 208, 211);
+}
+
+.subEditor-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  & .subEditor-dialog {
+    height: 100%;
+    margin: 0;
+  }
+  &-back {
+    position: absolute;
+    bottom: 46px;
+    left: 20px;
+  }
 }
 
 // 弹窗编辑器面板
@@ -263,9 +287,8 @@
       border-color: #222;
       border-style: solid;
       border-radius: 30px;
-      width: 375px;
-      height: 96%;
-      max-height: 812px;
+      width: 100%;
+      height: 100%;
       flex-grow: unset;
       min-height: unset;
       min-width: unset;
@@ -866,6 +889,11 @@
   z-index: 1000;
   pointer-events: none;
 }
+.ae-Preview-widgets--no-transition {
+  .ae-Editor-hlbox {
+    transition: none;
+  }
+}
 
 .ae-Editor-rendererCol {
   width: 140px;
@@ -1201,7 +1229,8 @@
 
 [data-editor-id].ae-is-draging,
 .ae-is-draging {
-  opacity: 0.6;
+  // opacity: 0.6;
+  display: none; // 有 ghost 了，这个不应该显示
 }
 
 [data-editor-id][data-visible='false'] {
@@ -1315,6 +1344,9 @@
       z-index: 10;
       background: rgba($Editor-rgion-bg, 0.05);
       border: 1px solid rgba($Editor-rgion-bg, 0.2);
+      -webkit-backdrop-filter: blur(0.5px);
+      backdrop-filter: blur(0.5px);
+      filter: blur(0.5px);
     }
   }
 
@@ -1399,7 +1431,7 @@
   > .region-tip {
     position: absolute;
     right: 50%;
-    top: -19px;
+    top: -17px;
     transform: translateX(50%);
     background: $Editor-rgion-bg; // $Editor-rgion-bg;
     color: #fff;
@@ -1451,17 +1483,33 @@
   }
 
   // 兼容方案，避免便签被遮挡: 区域仅有 [内容区]，头部标签放内部展示
-  > div.region-tip.is-only-child-region,
-  &.region-label-within > .region-tip {
-    top: 1px;
-    border-radius: 0 0 3px 3px;
-  }
+  // > div.region-tip.is-only-child-region,
+  // &.region-label-within > .region-tip {
+  //   top: 1px;
+  //   border-radius: 0 0 3px 3px;
+  // }
 
   // 高亮区域hover态
   &.region-hover {
     &:before,
     > .region-tip {
       visibility: visible;
+    }
+  }
+
+  &.region-can-be-drop {
+    &:before,
+    > .region-tip {
+      visibility: visible;
+    }
+
+    > .region-tip .region-text {
+      animation: growing 1s infinite linear;
+      margin: -3px -8px;
+      padding: 3px 8px;
+      // border: 1px solid #f39000;
+      background-color: #fff;
+      color: #333;
     }
   }
 
@@ -1608,8 +1656,10 @@ div.ae-DragImage {
     .col-edit {
       width: 30px;
       flex-grow: 0;
+      min-width: auto;
 
       > button {
+        cursor: pointer;
         border: 0;
         background-color: transparent;
         outline: none;
@@ -1907,7 +1957,6 @@ div[class*='Form-group']:empty {
   justify-content: space-between;
   background: #fff;
   align-items: center;
-  border-bottom: 1px solid $editor-border-color;
   .ae-Breadcrumb {
     flex: 1;
     max-width: 100%;
@@ -1916,5 +1965,20 @@ div[class*='Form-group']:empty {
   &-Right-Container {
     z-index: 1001;
     background-color: #fff;
+  }
+}
+
+.ae-Editor-inner--mobile {
+  .ae-Main {
+    position: relative;
+    .ae-Preview {
+      position: absolute;
+      transform: translateX(-50%);
+      transform-origin: top;
+      top: 10%;
+      left: 50%;
+      width: 395px;
+      height: 687px;
+    }
   }
 }

@@ -2,7 +2,13 @@ import React from 'react';
 import isEqual from 'lodash/isEqual';
 import pickBy from 'lodash/pickBy';
 import omitBy from 'lodash/omitBy';
-import {Renderer, RendererProps, filterTarget, mapTree} from 'amis-core';
+import {
+  Renderer,
+  RendererProps,
+  createObjectFromChain,
+  filterTarget,
+  mapTree
+} from 'amis-core';
 import {SchemaNode, Schema, ActionObject, PlainObject} from 'amis-core';
 import {CRUDStore, ICRUDStore, getMatchedEventTargets} from 'amis-core';
 import {
@@ -325,6 +331,15 @@ export interface CRUDCommonSchema extends BaseSchema, SpinnerExtraProps {
 
   /**
    * 自定义搜索匹配函数，当开启loadDataOnce时，会基于该函数计算的匹配结果进行过滤，主要用于处理列字段类型较为复杂或者字段值格式和后端返回不一致的场景
+   *
+   * 参数说明
+   *
+   *  * `items` 当前表格数据
+   *  * `itemsRaw` 当前表格数据（未处理）
+   *  * `options` 配置
+   *  * `options.query` 查询条件
+   *  * `options.columns` 列配置
+   *  * `options.matchSorter` 系统默认的排序方法
    * @since 3.5.0
    */
   matchFunc?: string | any;
@@ -876,15 +891,21 @@ export default class CRUD extends React.Component<CRUDProps, any> {
       .filter(item => item)
       .join(',');
 
-    const ctx = createObject(store.mergedData, {
-      ...selectedItems[0],
-      currentPageData: (store.mergedData?.items || []).concat(),
-      rows: selectedItems,
-      items: selectedItems,
-      selectedItems,
-      unSelectedItems: unSelectedItems,
-      ids
-    });
+    const ctx = createObjectFromChain([
+      store.mergedData,
+      {
+        event: e // 固定事件数据从event.data中获取，方便批量操作按钮绑定动作时获取动作产生的数据
+      },
+      {
+        ...selectedItems[0],
+        currentPageData: (store.mergedData?.items || []).concat(),
+        rows: selectedItems,
+        items: selectedItems,
+        selectedItems,
+        unSelectedItems: unSelectedItems,
+        ids
+      }
+    ]);
 
     let fn = () => {
       if (action.actionType === 'dialog') {
@@ -1241,7 +1262,7 @@ export default class CRUD extends React.Component<CRUDProps, any> {
     });
   }
 
-  search(
+  async search(
     values?: any,
     silent?: boolean,
     clearSelection?: boolean,
@@ -1263,6 +1284,7 @@ export default class CRUD extends React.Component<CRUDProps, any> {
       pickerMode,
       env,
       loadDataOnce,
+      loadDataOnceFetchOnFilter,
       source,
       columns,
       dispatchEvent
@@ -1300,98 +1322,89 @@ export default class CRUD extends React.Component<CRUDProps, any> {
             'options'
           ) as any)
         : undefined;
-    isEffectiveApi(api, data)
-      ? store
-          .fetchInitData(api, data, {
-            successMessage: messages && messages.fetchSuccess,
-            errorMessage: messages && messages.fetchFailed,
-            autoAppend: true,
-            forceReload,
-            loadDataOnce,
-            source,
-            silent,
-            pageField,
-            perPageField,
-            loadDataMode,
-            syncResponse2Query,
-            columns: store.columns ?? columns,
-            matchFunc
+    if (isEffectiveApi(api, data)) {
+      const value = await store.fetchInitData(api, data, {
+        successMessage: messages && messages.fetchSuccess,
+        errorMessage: messages && messages.fetchFailed,
+        autoAppend: true,
+        forceReload,
+        loadDataOnce,
+        source,
+        silent,
+        pageField,
+        perPageField,
+        loadDataMode,
+        syncResponse2Query,
+        columns: store.columns ?? columns,
+        matchFunc,
+        filterOnAllColumns: loadDataOnceFetchOnFilter === false
+      });
+      if (!isAlive(store)) {
+        return value;
+      }
+
+      const {page, lastPage, msg, error} = store;
+
+      if (isInit) {
+        // 初始化请求完成
+        const rendererEvent = await dispatchEvent?.(
+          'fetchInited',
+          createObject(this.props.data, {
+            responseData: value?.ok ? store.data ?? {} : value,
+            responseStatus:
+              value?.status === undefined ? (error ? 1 : 0) : value?.status,
+            responseMsg: msg
           })
-          .then(async value => {
-            if (!isAlive(store)) {
-              return value;
-            }
+        );
 
-            const {page, lastPage, data, msg, error} = store;
+        if (rendererEvent?.prevented) {
+          return store.data;
+        }
+      }
 
-            if (isInit) {
-              // 初始化请求完成
-              const rendererEvent = await dispatchEvent?.(
-                'fetchInited',
-                createObject(this.props.data, {
-                  responseData: value?.ok ? data ?? {} : value,
-                  responseStatus:
-                    value?.status === undefined
-                      ? error
-                        ? 1
-                        : 0
-                      : value?.status,
-                  responseMsg: msg
-                })
-              );
+      // 空列表 且 页数已经非法超出，则跳转到最后的合法页数
+      if (
+        !loadDataOnce &&
+        !store.data.items.length &&
+        !interval &&
+        page > 1 &&
+        lastPage < page
+      ) {
+        this.search(
+          {
+            ...store.query,
+            [pageField || 'page']: lastPage
+          },
+          false,
+          undefined
+        );
+      }
 
-              if (rendererEvent?.prevented) {
-                return;
-              }
-            }
+      value?.ok && // 接口正常返回才继续轮训
+        interval &&
+        this.mounted &&
+        (!stopAutoRefreshWhen ||
+          !(
+            (stopAutoRefreshWhenModalIsOpen && store.hasModalOpened) ||
+            evalExpression(
+              stopAutoRefreshWhen,
+              createObject(store.data, store.query)
+            )
+          )) &&
+        (this.timer = setTimeout(
+          silentPolling
+            ? this.silentSearch.bind(this, undefined, undefined, true)
+            : this.search.bind(this, undefined, undefined, undefined, true),
+          Math.max(interval, 1000)
+        ));
+    } else if (source) {
+      store.initFromScope(data, source, {
+        columns: store.columns ?? columns,
+        matchFunc
+      });
+    }
 
-            // 空列表 且 页数已经非法超出，则跳转到最后的合法页数
-            if (
-              !store.data.items.length &&
-              !interval &&
-              page > 1 &&
-              lastPage < page
-            ) {
-              this.search(
-                {
-                  ...store.query,
-                  [pageField || 'page']: lastPage
-                },
-                false,
-                undefined
-              );
-            }
-
-            value?.ok && // 接口正常返回才继续轮训
-              interval &&
-              this.mounted &&
-              (!stopAutoRefreshWhen ||
-                !(
-                  (stopAutoRefreshWhenModalIsOpen && store.hasModalOpened) ||
-                  evalExpression(
-                    stopAutoRefreshWhen,
-                    createObject(store.data, store.query)
-                  )
-                )) &&
-              (this.timer = setTimeout(
-                silentPolling
-                  ? this.silentSearch.bind(this, undefined, undefined, true)
-                  : this.search.bind(
-                      this,
-                      undefined,
-                      undefined,
-                      undefined,
-                      true
-                    ),
-                Math.max(interval, 1000)
-              ));
-            return value;
-          })
-      : source &&
-        store.initFromScope(data, source, {
-          columns: store.columns ?? columns,
-          matchFunc
-        });
+    return store.data;
   }
 
   silentSearch(values?: object, clearSelection?: boolean, forceReload = false) {
@@ -1435,9 +1448,13 @@ export default class CRUD extends React.Component<CRUDProps, any> {
     this.search(undefined, undefined, undefined);
 
     if (autoJumpToTopOnPagerChange && this.control) {
-      (findDOMNode(this.control) as HTMLElement).scrollIntoView();
-      const scrolledY = window.scrollY;
-      scrolledY && window.scroll(0, scrolledY);
+      if (this.control.scrollToTop) {
+        this.control.scrollToTop();
+      } else {
+        (findDOMNode(this.control) as HTMLElement).scrollIntoView();
+        const scrolledY = window.scrollY;
+        scrolledY && window.scroll(0, scrolledY);
+      }
     }
   }
 
@@ -1858,7 +1875,7 @@ export default class CRUD extends React.Component<CRUDProps, any> {
       perPageField,
       replace
     );
-    this.search(
+    return this.search(
       undefined,
       undefined,
       clearSelection ?? replace,
@@ -1869,14 +1886,15 @@ export default class CRUD extends React.Component<CRUDProps, any> {
   reload(
     subpath?: string,
     query?: any,
+    ctx?: any,
+    silent?: boolean,
     replace?: boolean,
-    resetPage?: boolean,
     args?: any
   ) {
     if (query) {
-      return this.receive(query, undefined, replace, resetPage, true);
+      return this.receive(query, undefined, replace, args?.resetPage, true);
     } else {
-      this.search(undefined, undefined, true, true);
+      return this.search(undefined, undefined, true, true);
     }
   }
 
@@ -1887,7 +1905,7 @@ export default class CRUD extends React.Component<CRUDProps, any> {
     resetPage?: boolean,
     clearSelection?: boolean
   ) {
-    this.handleQuery(values, true, replace, resetPage, clearSelection);
+    return this.handleQuery(values, true, replace, resetPage, clearSelection);
   }
 
   reloadTarget(target: string, data: any) {
@@ -2710,6 +2728,7 @@ export default class CRUD extends React.Component<CRUDProps, any> {
           'body',
           {
             ...rest,
+            id,
             // 通用事件 例如cus-event 如果直接透传给table 则会被触发2次
             // 因此只将下层组件table、cards中自定义事件透传下去 否则通过crud配置了也不会执行
             onEvent: this.filterOnEvent(onEvent),
@@ -2761,7 +2780,8 @@ export default class CRUD extends React.Component<CRUDProps, any> {
             footerToolbarRender: this.renderFooterToolbar,
             data: store.mergedData,
             loading: store.loading,
-            host: this
+            host: this,
+            testIdBuilder: testIdBuilder?.getChild('body')
           }
         )}
         {render(
@@ -2825,10 +2845,10 @@ export class CRUDRenderer extends CRUD {
       );
     }
 
-    return super.reload(subpath, query, replace, args?.resetPage ?? true);
+    return super.reload(subpath, query, ctx, silent, replace, args);
   }
 
-  receive(
+  async receive(
     values: any,
     subPath?: string,
     replace?: boolean,

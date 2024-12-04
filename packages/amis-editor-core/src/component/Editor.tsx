@@ -6,19 +6,25 @@ import {MainStore, EditorStoreType} from '../store/editor';
 import {EditorManager, EditorManagerConfig, PluginClass} from '../manager';
 import {reaction} from 'mobx';
 import {RenderOptions, closeContextMenus, toast} from 'amis';
-import {PluginEventListener, RendererPluginAction} from '../plugin';
+import {
+  PluginEventListener,
+  RendererPluginAction,
+  IGlobalEvent
+} from '../plugin';
 import {reGenerateID} from '../util';
 import {SubEditor} from './SubEditor';
 import Breadcrumb from './Breadcrumb';
 import {destroy, isAlive} from 'mobx-state-tree';
 import {ScaffoldModal} from './ScaffoldModal';
 import {PopOverForm} from './PopOverForm';
+import {ModalForm} from './ModalForm';
 import {ContextMenuPanel} from './Panel/ContextMenuPanel';
 import {LeftPanels} from './Panel/LeftPanels';
 import {RightPanels} from './Panel/RightPanels';
 import type {SchemaObject} from 'amis';
 import type {VariableGroup, VariableOptions} from '../variable';
 import type {EditorNodeType} from '../store/node';
+import {MobileDevTool} from 'amis-ui';
 
 export interface EditorProps extends PluginEventListener {
   value: SchemaObject;
@@ -109,6 +115,8 @@ export interface EditorProps extends PluginEventListener {
     customActionGetter?: (manager: EditorManager) => {
       [propName: string]: RendererPluginAction;
     };
+
+    globalEventGetter?: (manager: EditorManager) => IGlobalEvent[];
   };
 
   /** 上下文变量 */
@@ -135,12 +143,20 @@ export interface EditorProps extends PluginEventListener {
   getHostNodeDataSchema?: () => Promise<any>;
 
   getAvaiableContextFields?: (node: EditorNodeType) => Promise<any>;
+  readonly?: boolean;
+
+  onEditorMount?: (manager: EditorManager) => void;
+  onEditorUnmount?: (manager: EditorManager) => void;
+
+  children?: React.ReactNode | ((manager: EditorManager) => React.ReactNode);
 }
 
 export default class Editor extends Component<EditorProps> {
   readonly store: EditorStoreType;
   readonly manager: EditorManager;
   readonly mainRef = React.createRef<HTMLDivElement>();
+  readonly mainPreviewRef = React.createRef<HTMLDivElement>();
+  readonly mainPreviewBodyRef = React.createRef<any>();
   toDispose: Array<Function> = [];
   lastResult: any;
   curCopySchemaData: any; // 用于记录当前复制的元素
@@ -160,6 +176,7 @@ export default class Editor extends Component<EditorProps> {
       showCustomRenderersPanel,
       superEditorData,
       hostManager,
+      onEditorMount,
       ...rest
     } = props;
 
@@ -189,6 +206,10 @@ export default class Editor extends Component<EditorProps> {
 
     this.manager = new EditorManager(config, this.store, hostManager);
 
+    this.store.setGlobalEvents(
+      config.actionOptions?.globalEventGetter?.(this.manager) || []
+    );
+
     // 子编辑器不再重新设置 editorStore
     if (!(props.isSubEditor && (window as any).editorStore)) {
       (window as any).editorStore = this.store;
@@ -215,6 +236,8 @@ export default class Editor extends Component<EditorProps> {
     this.toDispose.push(
       this.manager.on('preview2editor', () => this.manager.rebuild())
     );
+
+    onEditorMount?.(this.manager);
   }
 
   componentDidMount() {
@@ -255,9 +278,18 @@ export default class Editor extends Component<EditorProps> {
     if (props?.amisEnv?.replaceText !== prevProps?.amisEnv?.replaceText) {
       this.store.setAppCorpusData(props?.amisEnv?.replaceText);
     }
+    if (
+      props.actionOptions?.globalEventGetter?.(this.manager) !==
+      prevProps.actionOptions?.globalEventGetter?.(this.manager)
+    ) {
+      this.store.setGlobalEvents(
+        props.actionOptions?.globalEventGetter?.(this.manager) || []
+      );
+    }
   }
 
   componentWillUnmount() {
+    this.props.onEditorUnmount?.(this.manager);
     document.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('message', this.handleMessage);
     this.toDispose.forEach(fn => fn());
@@ -272,6 +304,10 @@ export default class Editor extends Component<EditorProps> {
     // 弹窗模式不处理
     if (this.props.isSubEditor) {
       // e.defaultPrevented // 或者已经阻止不处理
+      return;
+    }
+
+    if (this.props.readonly) {
       return;
     }
 
@@ -573,7 +609,9 @@ export default class Editor extends Component<EditorProps> {
       previewProps,
       autoFocus,
       isSubEditor,
-      amisEnv
+      amisEnv,
+      readonly,
+      children
     } = this.props;
 
     return (
@@ -587,8 +625,14 @@ export default class Editor extends Component<EditorProps> {
           className
         )}
       >
-        <div className="ae-Editor-inner" onContextMenu={this.handleContextMenu}>
-          {!preview && (
+        <div
+          className={cx(
+            'ae-Editor-inner',
+            isMobile && 'ae-Editor-inner--mobile'
+          )}
+          onContextMenu={this.handleContextMenu}
+        >
+          {!preview && !readonly && (
             <LeftPanels
               store={this.store}
               manager={this.manager}
@@ -596,7 +640,7 @@ export default class Editor extends Component<EditorProps> {
             />
           )}
 
-          <div className="ae-Main">
+          <div className="ae-Main" ref={this.mainPreviewRef}>
             {!preview && (
               <div className="ae-Header">
                 <Breadcrumb store={this.store} manager={this.manager} />
@@ -605,6 +649,12 @@ export default class Editor extends Component<EditorProps> {
                   className="ae-Header-Right-Container"
                 ></div>
               </div>
+            )}
+            {isMobile && (
+              <MobileDevTool
+                container={this.mainPreviewRef.current}
+                previewBody={this.mainPreviewBodyRef.current?.currentDom}
+              />
             )}
             <Preview
               {...previewProps}
@@ -618,6 +668,8 @@ export default class Editor extends Component<EditorProps> {
               amisEnv={amisEnv}
               autoFocus={autoFocus}
               toolbarContainer={this.getToolbarContainer}
+              readonly={readonly}
+              ref={this.mainPreviewBodyRef}
             ></Preview>
           </div>
 
@@ -628,10 +680,13 @@ export default class Editor extends Component<EditorProps> {
               theme={theme}
               appLocale={appLocale}
               amisEnv={amisEnv}
+              readonly={readonly}
             />
           )}
 
           {!preview && <ContextMenuPanel store={this.store} />}
+
+          {typeof children === 'function' ? children(this.manager) : children}
         </div>
 
         <SubEditor
@@ -639,6 +694,7 @@ export default class Editor extends Component<EditorProps> {
           manager={this.manager}
           theme={theme}
           amisEnv={amisEnv}
+          readonly={readonly}
         />
         <ScaffoldModal
           store={this.store}
@@ -646,6 +702,7 @@ export default class Editor extends Component<EditorProps> {
           theme={theme}
         />
         <PopOverForm store={this.store} manager={this.manager} theme={theme} />
+        <ModalForm store={this.store} manager={this.manager} theme={theme} />
       </div>
     );
   }

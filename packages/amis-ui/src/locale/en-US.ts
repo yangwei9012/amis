@@ -387,10 +387,15 @@ register('en-US', {
   'FormulaEditor.function': 'Function',
   'FormulaEditor.invalidData': 'invalid data, position or reason is {{err}}',
   'FormulaEditor.invalidValue': 'invalid value, reason is wrong value format',
+  'pullRefresh.normalText': '',
   'pullRefresh.pullingText': 'Pull down to refresh...',
   'pullRefresh.loosingText': 'Release to refresh...',
   'pullRefresh.loadingText': 'Loading...',
   'pullRefresh.successText': 'Loading success',
+  'pullRefresh.completedText': 'No more data',
+  'pullRefresh.crud2NormalText': 'Swipe up to load more',
+  'pullRefresh.crud2PullingText': 'Swipe up to load more',
+  'pullRefresh.crud2LoosingText': 'Release to load',
   'Picker.placeholder': 'Click icon on the right',
   'UserSelect.edit': 'edit',
   'UserSelect.save': 'preservation',
@@ -426,5 +431,7 @@ register('en-US', {
   'Signature.undo': 'undo',
   'Signature.confirm': 'confirm',
   'Signature.cancel': 'cancel',
-  'Signature.embedLabel': 'Click to sign'
+  'Signature.embedLabel': 'Click to sign',
+  'QRCode.tooLong':
+    'The QR code value is too long, please set the text to be below {{max}} characters.'
 });

@@ -34,6 +34,18 @@ exports[`Renderer:fieldSet 1`] = `
         <fieldset
           class="cxd-Collapse is-active no-border"
         >
+          <legend
+            class="cxd-Collapse-header bg-dark noTitle"
+          >
+            <span
+              class="cxd-Collapse-arrow-wrap"
+            >
+              <icon-mock
+                classname="cxd-Collapse-arrow icon icon-right-arrow-bold cxd-Collapse-arrow"
+                icon="right-arrow-bold"
+              />
+            </span>
+          </legend>
           <div
             class="cxd-Collapse-contentWrapper"
           >
@@ -48,6 +60,7 @@ exports[`Renderer:fieldSet 1`] = `
                 >
                   <div
                     class="cxd-Form-item cxd-Form-item--horizontal"
+                    data-amis-name="text"
                     data-role="form-item"
                   >
                     <label
@@ -122,6 +135,9 @@ exports[`Renderer:fieldSet with mode 1`] = `
         <fieldset
           class="cxd-Collapse is-active"
         >
+          <legend
+            class="cxd-Collapse-header noTitle"
+          />
           <div
             class="cxd-Collapse-contentWrapper"
           >
@@ -136,6 +152,7 @@ exports[`Renderer:fieldSet with mode 1`] = `
                 >
                   <div
                     class="cxd-Form-item cxd-Form-item--horizontal"
+                    data-amis-name="text1"
                     data-role="form-item"
                   >
                     <label
@@ -175,6 +192,7 @@ exports[`Renderer:fieldSet with mode 1`] = `
                   </div>
                   <div
                     class="cxd-Form-item cxd-Form-item--horizontal"
+                    data-amis-name="text2"
                     data-role="form-item"
                   >
                     <label
@@ -257,6 +275,9 @@ exports[`Renderer:fieldSet with mode 2`] = `
         <fieldset
           class="cxd-Collapse is-active"
         >
+          <legend
+            class="cxd-Collapse-header noTitle"
+          />
           <div
             class="cxd-Collapse-contentWrapper"
           >
@@ -271,6 +292,7 @@ exports[`Renderer:fieldSet with mode 2`] = `
                 >
                   <div
                     class="cxd-Form-item cxd-Form-item--inline"
+                    data-amis-name="text1"
                     data-role="form-item"
                   >
                     <label
@@ -310,6 +332,7 @@ exports[`Renderer:fieldSet with mode 2`] = `
                   </div>
                   <div
                     class="cxd-Form-item cxd-Form-item--inline"
+                    data-amis-name="text2"
                     data-role="form-item"
                   >
                     <label
@@ -392,6 +415,9 @@ exports[`Renderer:fieldSet with mode 3`] = `
         <fieldset
           class="cxd-Collapse is-active"
         >
+          <legend
+            class="cxd-Collapse-header noTitle"
+          />
           <div
             class="cxd-Collapse-contentWrapper"
           >
@@ -406,6 +432,7 @@ exports[`Renderer:fieldSet with mode 3`] = `
                 >
                   <div
                     class="cxd-Form-item cxd-Form-item--normal"
+                    data-amis-name="text1"
                     data-role="form-item"
                   >
                     <label
@@ -441,6 +468,7 @@ exports[`Renderer:fieldSet with mode 3`] = `
                   </div>
                   <div
                     class="cxd-Form-item cxd-Form-item--normal"
+                    data-amis-name="text2"
                     data-role="form-item"
                   >
                     <label
@@ -533,6 +561,7 @@ exports[`Renderer:fieldSet with titlePosition & collapseTitle & title 1`] = `
                 >
                   <div
                     class="cxd-Form-item cxd-Form-item--normal"
+                    data-amis-name="text1"
                     data-role="form-item"
                   >
                     <label
@@ -568,6 +597,7 @@ exports[`Renderer:fieldSet with titlePosition & collapseTitle & title 1`] = `
                   </div>
                   <div
                     class="cxd-Form-item cxd-Form-item--normal"
+                    data-amis-name="text2"
                     data-role="form-item"
                   >
                     <label

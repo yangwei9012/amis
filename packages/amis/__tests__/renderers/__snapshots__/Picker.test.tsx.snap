@@ -8,6 +8,7 @@ exports[`1. Renderer:Picker base 1`] = `
   <div>
     <div
       class="cxd-Form-item cxd-Form-item--normal"
+      data-amis-name="picker"
       data-role="form-item"
     >
       <label
@@ -30,7 +31,7 @@ exports[`1. Renderer:Picker base 1`] = `
           class="cxd-Picker cxd-Picker--single is-focused"
         >
           <div
-            class="cxd-Picker-input"
+            class="cxd-Picker-input is-focused"
           >
             <div
               class="cxd-Picker-placeholder"
@@ -112,13 +113,17 @@ exports[`1. Renderer:Picker base 1`] = `
                   class="cxd-ListItem-checkBtn"
                 >
                   <label
-                    class="cxd-Checkbox cxd-Checkbox--radio cxd-Checkbox--full"
+                    class="cxd-Checkbox cxd-Checkbox--radio--default"
                     data-role="checkbox"
                   >
                     <input
                       type="radio"
                     />
-                    <i />
+                    <i>
+                      <div
+                        class="radio-icon icon"
+                      />
+                    </i>
                     <span
                       class=""
                     />
@@ -141,13 +146,17 @@ exports[`1. Renderer:Picker base 1`] = `
                   class="cxd-ListItem-checkBtn"
                 >
                   <label
-                    class="cxd-Checkbox cxd-Checkbox--radio cxd-Checkbox--full"
+                    class="cxd-Checkbox cxd-Checkbox--radio--default checked cxd-Checkbox--radio--default--checked"
                     data-role="checkbox"
                   >
                     <input
                       type="radio"
                     />
-                    <i />
+                    <i>
+                      <div
+                        class="radio-icon icon"
+                      />
+                    </i>
                     <span
                       class=""
                     />
@@ -170,13 +179,17 @@ exports[`1. Renderer:Picker base 1`] = `
                   class="cxd-ListItem-checkBtn"
                 >
                   <label
-                    class="cxd-Checkbox cxd-Checkbox--radio cxd-Checkbox--full"
+                    class="cxd-Checkbox cxd-Checkbox--radio--default"
                     data-role="checkbox"
                   >
                     <input
                       type="radio"
                     />
-                    <i />
+                    <i>
+                      <div
+                        class="radio-icon icon"
+                      />
+                    </i>
                     <span
                       class=""
                     />
@@ -225,6 +238,7 @@ exports[`1. Renderer:Picker base 2`] = `
 <div>
   <div
     class="cxd-Form-item cxd-Form-item--normal"
+    data-amis-name="picker"
     data-role="form-item"
   >
     <label
@@ -247,7 +261,7 @@ exports[`1. Renderer:Picker base 2`] = `
         class="cxd-Picker cxd-Picker--single is-focused"
       >
         <div
-          class="cxd-Picker-input"
+          class="cxd-Picker-input is-focused"
         >
           <div
             class="cxd-Picker-valueWrap"
@@ -258,11 +272,6 @@ exports[`1. Renderer:Picker base 2`] = `
               <div
                 class="cxd-Picker-value"
               >
-                <span
-                  class="cxd-Picker-valueIcon"
-                >
-                  ×
-                </span>
                 <span
                   class="cxd-Picker-valueLabel"
                 >

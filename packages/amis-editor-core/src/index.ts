@@ -42,8 +42,15 @@ import {UnknownRendererPlugin} from './plugin/Unknown';
 import ShortcutKey from './component/base/ShortcutKey';
 import WidthDraggableContainer from './component/base/WidthDraggableContainer';
 import {SchemaFrom} from './component/base/SchemaForm';
+import {RendererThumb} from './component/RendererThumb';
+import {AvailableRenderersPanel} from './component/Panel/AvailableRenderersPanel';
+import {deepSplice} from './deepSplice';
 
 export const version = '__buildVersion';
+(window as any).amisEditorVersionInfo = {
+  version: '__buildVersion',
+  buildTime: '__buildTime'
+};
 
 export default Editor;
 
@@ -51,6 +58,7 @@ export {
   Editor,
   MiniEditor,
   utils,
+  deepSplice,
   mapReactElement,
   RendererEditor,
   BasicEditor,
@@ -64,6 +72,7 @@ export {
   EditorStoreType,
   ContainerWrapper,
   AvailableRenderersPlugin,
+  AvailableRenderersPanel,
   BasicToolbarPlugin,
   CodePlugin,
   ErrorRendererPlugin,
@@ -71,5 +80,6 @@ export {
   UnknownRendererPlugin,
   ShortcutKey,
   SchemaFrom,
-  WidthDraggableContainer
+  WidthDraggableContainer,
+  RendererThumb
 };

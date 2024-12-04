@@ -129,7 +129,10 @@ export const FormItemStore = StoreNode.named('FormItemStore')
       /** 总条数 */
       total: 0
     }),
-    accumulatedOptions: types.optional(types.frozen<Array<any>>(), [])
+    accumulatedOptions: types.optional(types.frozen<Array<any>>(), []),
+    popOverOpen: false,
+    popOverData: types.frozen(),
+    popOverSchema: types.frozen()
   })
   .views(self => {
     function getForm(): any {
@@ -266,9 +269,10 @@ export const FormItemStore = StoreNode.named('FormItemStore')
           }
 
           let unMatched = (valueArray && valueArray[index]) || item;
+          let hasValue = unMatched || unMatched === 0;
 
           if (
-            unMatched &&
+            hasValue &&
             (typeof unMatched === 'string' || typeof unMatched === 'number')
           ) {
             unMatched = {
@@ -287,7 +291,7 @@ export const FormItemStore = StoreNode.named('FormItemStore')
             if (origin) {
               unMatched[labelField] = origin[labelField];
             }
-          } else if (unMatched && extractValue) {
+          } else if (hasValue && extractValue) {
             unMatched = {
               [valueField || 'value']: item,
               [labelField || 'label']: 'UnKnown',
@@ -295,7 +299,7 @@ export const FormItemStore = StoreNode.named('FormItemStore')
             };
           }
 
-          unMatched && selectedOptions.push(unMatched);
+          hasValue && selectedOptions.push(unMatched);
         });
 
         if (selectedOptions.length) {
@@ -616,7 +620,7 @@ export const FormItemStore = StoreNode.named('FormItemStore')
       }
 
       for (let option of options) {
-        if (Array.isArray(option.children)) {
+        if (Array.isArray(option.children) && option.children.length) {
           const childFirst = getFirstAvaibleOption(option.children);
           if (childFirst !== undefined) {
             return childFirst;
@@ -1364,9 +1368,10 @@ export const FormItemStore = StoreNode.named('FormItemStore')
           selectedOptions.push(flattened[idx]);
         } else {
           let unMatched = (value && value[index]) || item;
+          let hasValue = unMatched || unMatched === 0;
 
           if (
-            unMatched &&
+            hasValue &&
             (typeof unMatched === 'string' || typeof unMatched === 'number')
           ) {
             unMatched = {
@@ -1382,7 +1387,7 @@ export const FormItemStore = StoreNode.named('FormItemStore')
             if (orgin) {
               unMatched[labelField] = orgin[labelField];
             }
-          } else if (unMatched && self.extractValue) {
+          } else if (hasValue && self.extractValue) {
             unMatched = {
               [valueField]: item,
               [labelField]: 'UnKnown',
@@ -1390,7 +1395,7 @@ export const FormItemStore = StoreNode.named('FormItemStore')
             };
           }
 
-          unMatched && selectedOptions.push(unMatched);
+          hasValue && selectedOptions.push(unMatched);
         }
       });
 
@@ -1405,14 +1410,16 @@ export const FormItemStore = StoreNode.named('FormItemStore')
           group.items.forEach(item => {
             if (self !== item) {
               options.push(
-                ...item.selectedOptions.map((item: any) => item && item.value)
+                ...item.selectedOptions.map(
+                  (item: any) => item && item[valueField]
+                )
               );
             }
           });
 
         if (filteredOptions.length && options.length) {
           filteredOptions = mapTree(filteredOptions, item => {
-            if (~options.indexOf(item.value)) {
+            if (~options.indexOf(item[valueField])) {
               return {
                 ...item,
                 disabled: true
@@ -1480,6 +1487,27 @@ export const FormItemStore = StoreNode.named('FormItemStore')
 
       if (callback) {
         dialogCallbacks.delete(self.dialogData);
+        setTimeout(() => callback(confirmed, result), 200);
+      }
+    }
+
+    function openPopOver(
+      schema: any,
+      ctx: any,
+      callback?: (confirmed?: any, value?: any) => void
+    ) {
+      self.popOverData = ctx || {};
+      self.popOverOpen = true;
+      self.popOverSchema = schema;
+      callback && dialogCallbacks.set(self.popOverData, callback);
+    }
+
+    function closePopOver(confirmed?: any, result?: any) {
+      const callback = dialogCallbacks.get(self.popOverData);
+      self.popOverOpen = false;
+
+      if (callback) {
+        dialogCallbacks.delete(self.popOverData);
         setTimeout(() => callback(confirmed, result), 200);
       }
     }
@@ -1558,6 +1586,8 @@ export const FormItemStore = StoreNode.named('FormItemStore')
       resetValidationStatus,
       openDialog,
       closeDialog,
+      openPopOver,
+      closePopOver,
       changeTmpValue,
       changeEmitedValue,
       addSubFormItem,

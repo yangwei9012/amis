@@ -38,7 +38,7 @@ import {BadgeObject} from 'amis-ui';
 import {RemoteOptionsProps, withRemoteConfig} from 'amis-ui';
 import {Spinner, Menu} from 'amis-ui';
 import {ScopedContext, IScopedContext} from 'amis-core';
-import type {NavigationItem} from 'amis-ui/lib/components/menu';
+import type {NavigationItem} from 'amis-ui/lib/components/menu/index';
 import type {MenuItemProps} from 'amis-ui/lib/components/menu/MenuItem';
 
 import type {Payload} from 'amis-core';
@@ -1482,7 +1482,8 @@ const ConditionBuilderWithRemoteOptions = withRemoteConfig({
 
 export default ThemedNavigation;
 @Renderer({
-  test: /(^|\/)(?:nav|navigation)$/,
+  type: 'nav',
+  alias: ['navigation'],
   name: 'nav'
 })
 export class NavigationRenderer extends React.Component<RendererProps> {

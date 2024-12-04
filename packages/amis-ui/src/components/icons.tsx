@@ -108,6 +108,7 @@ import RotateLeft from '../icons/rotate-left.svg';
 import RotateRight from '../icons/rotate-right.svg';
 import ScaleOrigin from '../icons/scale-origin.svg';
 import If from '../icons/if.svg';
+import RotateScreen from '../icons/rotate-screen.svg';
 
 import isObject from 'lodash/isObject';
 import type {TestIdBuilder} from 'amis-core';
@@ -251,6 +252,7 @@ registerIcon('rotate-left', RotateLeft);
 registerIcon('rotate-right', RotateRight);
 registerIcon('scale-origin', ScaleOrigin);
 registerIcon('if', If);
+registerIcon('rotate-screen', RotateScreen);
 
 export interface IconCheckedSchema {
   id: string;
@@ -298,7 +300,7 @@ export function Icon({
     iconContent = '';
   }
 
-  if (!icon) {
+  if (!icon && !iconContent) {
     return null;
   }
 
@@ -466,6 +468,8 @@ export function Icon({
   // 没有合适的图标
   return <span className="text-danger">没有 icon {icon}</span>;
 }
+
+export default Icon;
 
 export {
   InputClearIcon,
