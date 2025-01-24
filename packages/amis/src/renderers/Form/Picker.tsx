@@ -157,13 +157,13 @@ export default class PickerControl extends React.PureComponent<
         placement: 'top',
         trigger: 'hover',
         showArrow: false,
-        offset: [0, -10]
+        offset: [0, -5]
       },
       overflowTagPopoverInCRUD: {
         placement: 'bottom',
         trigger: 'hover',
         showArrow: false,
-        offset: [0, 10]
+        offset: [0, 0]
       }
     }
   };
@@ -456,7 +456,9 @@ export default class PickerControl extends React.PureComponent<
   }
 
   @autobind
-  handleFocus() {
+  handleFocus(e: React.MouseEvent<HTMLElement>) {
+    this.input.current && this.input.current.focus();
+    e.stopPropagation();
     this.setState({
       isFocused: true
     });
@@ -471,7 +473,6 @@ export default class PickerControl extends React.PureComponent<
 
   @autobind
   handleClick() {
-    this.input.current && this.input.current.focus();
     this.open();
   }
 
@@ -543,9 +544,7 @@ export default class PickerControl extends React.PureComponent<
     } = this.props;
 
     return (
-      <OverflowTpl
-        inline={false}
-        tooltip={getVariable(item, labelField || 'label')}
+      <div
         key={index}
         className={cx(
           `${ns}Picker-value`,
@@ -579,31 +578,36 @@ export default class PickerControl extends React.PureComponent<
             ×
           </span>
         )}
-        <span
-          className={cx(
-            `${ns}Picker-valueLabel`,
-            setThemeClassName({
-              ...this.props,
-              name: 'pickFontClassName',
-              id,
-              themeCss: themeCss || css
-            })
-          )}
-          onClick={e => {
-            e.stopPropagation();
-            this.handleItemClick(item);
-          }}
+        <OverflowTpl
+          inline={false}
+          tooltip={getVariable(item, labelField || 'label')}
         >
-          {labelTpl ? (
-            <Html html={filter(labelTpl, item)} filterHtml={env.filterHtml} />
-          ) : (
-            `${
-              getVariable(item, labelField || 'label') ||
-              getVariable(item, 'id')
-            }`
-          )}
-        </span>
-      </OverflowTpl>
+          <span
+            className={cx(
+              `${ns}Picker-valueLabel`,
+              setThemeClassName({
+                ...this.props,
+                name: 'pickFontClassName',
+                id,
+                themeCss: themeCss || css
+              })
+            )}
+            onClick={e => {
+              e.stopPropagation();
+              this.handleItemClick(item);
+            }}
+          >
+            {labelTpl ? (
+              <Html html={filter(labelTpl, item)} filterHtml={env.filterHtml} />
+            ) : (
+              `${
+                getVariable(item, labelField || 'label') ||
+                getVariable(item, 'id')
+              }`
+            )}
+          </span>
+        </OverflowTpl>
+      </div>
     );
   }
 
@@ -640,7 +644,7 @@ export default class PickerControl extends React.PureComponent<
     }
 
     return (
-      <div className={`${ns}Picker-values`}>
+      <>
         {tags.map((item, index) => {
           if (enableOverflow && index === maxTagCount) {
             return (
@@ -696,7 +700,7 @@ export default class PickerControl extends React.PureComponent<
 
           return this.renderTag(item, index);
         })}
-      </div>
+      </>
     );
   }
 
@@ -803,24 +807,24 @@ export default class PickerControl extends React.PureComponent<
                 <div className={cx('Picker-placeholder')}>
                   {__(placeholder)}
                 </div>
-              ) : null}
+              ) : (
+                <div
+                  className={cx('Picker-valueWrap')}
+                  {...testIdBuilder?.getTestId()}
+                >
+                  {this.renderValues()}
 
-              <div
-                className={cx('Picker-valueWrap')}
-                {...testIdBuilder?.getTestId()}
-              >
-                {this.renderValues()}
-
-                <input
-                  onChange={noop}
-                  value={''}
-                  ref={this.input}
-                  onKeyDown={this.handleKeyDown}
-                  onFocus={this.handleFocus}
-                  onBlur={this.handleBlur}
-                  readOnly={mobileUI}
-                />
-              </div>
+                  <input
+                    onChange={noop}
+                    value={''}
+                    ref={this.input}
+                    onKeyDown={this.handleKeyDown}
+                    onClick={this.handleFocus}
+                    onBlur={this.handleBlur}
+                    readOnly={mobileUI}
+                  />
+                </div>
+              )}
 
               {clearable && !disabled && selectedOptions.length ? (
                 <a onClick={this.clearValue} className={cx('Picker-clear')}>

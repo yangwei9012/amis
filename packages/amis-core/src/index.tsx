@@ -39,7 +39,10 @@ export * from './utils/index';
 export * from './utils/animations';
 export * from './types';
 export * from './store';
+export * from './globalVar';
 import * as utils from './utils/helper';
+import './globalVarClientHandler';
+import './globalVarDefaultValueHandler';
 import {getEnv} from 'mobx-state-tree';
 
 import {RegisterStore, registerStore, RendererStore} from './store';
@@ -134,6 +137,8 @@ import {StatusScoped} from './StatusScoped';
 import styleManager from './StyleManager';
 
 import {bindGlobalEvent, dispatchGlobalEvent} from './utils/renderer-event';
+
+import {getCustomVendor, registerCustomVendor} from './utils/icon';
 
 // @ts-ignore
 export const version = '__buildVersion';
@@ -247,18 +252,21 @@ export {
   getGlobalOptions,
   setGlobalOptions,
   wrapFetcher,
-  SchemaRenderer
+  SchemaRenderer,
+  getCustomVendor,
+  registerCustomVendor
 };
 
 export function render(
   schema: Schema,
-  props: RootRenderProps = {},
+  {key, ...props}: RootRenderProps = {},
   options: RenderOptions = {},
   pathPrefix: string = ''
 ): JSX.Element {
   return (
     <AMISRenderer
       {...props}
+      key={key}
       schema={schema}
       pathPrefix={pathPrefix}
       options={options}

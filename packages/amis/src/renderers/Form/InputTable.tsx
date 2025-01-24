@@ -280,6 +280,7 @@ export interface TableState {
   filteredItems: Array<TableDataItem>;
   columns: Array<any>;
   editIndex: string;
+  rowIndex?: string;
   isCreateMode?: boolean;
   page?: number;
   total?: number;
@@ -387,6 +388,7 @@ export default class FormTable<
     this.emitValue = this.emitValue.bind(this);
     this.tableRef = this.tableRef.bind(this);
     this.flush = this.flush.bind(this);
+    this.filterItemIndex = this.filterItemIndex.bind(this);
 
     if (addHook) {
       this.toDispose.push(addHook(this.flush, 'flush'));
@@ -967,11 +969,12 @@ export default class FormTable<
    */
   async dispatchEvent(eventName: string, eventData: any = {}) {
     const {dispatchEvent} = this.props;
-    const {items} = this.state;
+    const {items, rowIndex} = this.state;
     const rendererEvent = await dispatchEvent(
       eventName,
       resolveEventData(this.props, {
         value: [...items],
+        rowIndex,
         ...eventData
       })
     );
@@ -1040,7 +1043,7 @@ export default class FormTable<
     if (isNew && isEffectiveApi(addApi, createObject(data, item))) {
       remote = await env.fetcher(addApi, createObject(data, item));
       apiMsg = (addApi as ApiObject)?.messages?.failed;
-    } else if (isEffectiveApi(updateApi, createObject(data, item))) {
+    } else if (!isNew && isEffectiveApi(updateApi, createObject(data, item))) {
       remote = await env.fetcher(updateApi, createObject(data, item));
       apiMsg = (updateApi as ApiObject)?.messages?.failed;
     }
@@ -1220,7 +1223,7 @@ export default class FormTable<
 
   convertToRawPath(path: string, state?: Partial<TableState>) {
     const {filteredItems, items} = {...this.state, ...state};
-    const list = path.split('.').map((item: any) => parseInt(item, 10));
+    const list = `${path}`.split('.').map((item: any) => parseInt(item, 10));
     const firstRow = filteredItems[list[0]];
     list[0] = items.findIndex(item => item === firstRow);
     if (list[0] === -1) {
@@ -1294,7 +1297,6 @@ export default class FormTable<
     const ns = this.props.classPrefix;
     const __ = this.props.translate;
     const needConfirm = this.props.needConfirm;
-    const showIndex = this.props.showIndex;
     const isStatic = this.props.static;
     const disabled = this.props.disabled;
 
@@ -1703,25 +1705,6 @@ export default class FormTable<
       }
     }
 
-    if (showIndex) {
-      columns.unshift({
-        label: __('Table.index'),
-        width: 50,
-        children: (props: any) => {
-          const indexes = this.convertToRawPath(props.rowIndexPath as string)
-            .split('.')
-            .map(item => parseInt(item, 10) + 1);
-          return (
-            <td className={props.className}>
-              {props.cellPrefix}
-              <span>{indexes.join('.')}</span>
-              {props.cellAffix}
-            </td>
-          );
-        }
-      });
-    }
-
     return columns;
   }
 
@@ -1756,40 +1739,6 @@ export default class FormTable<
         const newState = {};
         const editIndex = state.editIndex;
         const lastModifiedRow = state.lastModifiedRow;
-
-        if (editIndex) {
-          const indexes = editIndex.split('.').map(item => parseInt(item, 10));
-          let items = state.items.concat();
-          const origin = getTree(items, indexes);
-
-          if (!origin) {
-            return newState;
-          }
-
-          const value: any = {
-            ...rows
-          };
-          const originItems = items;
-          items = spliceTree(items, indexes, 1, value);
-          this.reUseRowId(items, originItems, indexes);
-
-          Object.assign(newState, {
-            items,
-            filteredItems: state.filteredItems.map(a =>
-              a === origin ? value : a
-            ),
-            /** 记录最近一次编辑记录，用于取消编辑数据回溯， */
-            ...(lastModifiedRow?.index === editIndex
-              ? {}
-              : {
-                  lastModifiedRow: origin.hasOwnProperty(PLACE_HOLDER)
-                    ? undefined
-                    : {index: editIndex, data: {...origin}}
-                })
-          });
-          return newState;
-        }
-
         let items = state.items.concat();
 
         if (Array.isArray(rows)) {
@@ -1805,6 +1754,44 @@ export default class FormTable<
           });
         } else {
           rowIndexes = this.convertToRawPath(rowIndexes as string, state);
+
+          // 修改当前正在编辑的行
+          if (editIndex && rowIndexes === editIndex) {
+            const indexes = editIndex
+              .split('.')
+              .map(item => parseInt(item, 10));
+            let items = state.items.concat();
+            const origin = getTree(items, indexes);
+
+            if (!origin) {
+              return newState;
+            }
+
+            const value: any = {
+              ...rows
+            };
+            const originItems = items;
+            items = spliceTree(items, indexes, 1, value);
+            this.reUseRowId(items, originItems, indexes);
+
+            Object.assign(newState, {
+              items,
+              filteredItems: state.filteredItems.map(a =>
+                a === origin ? value : a
+              ),
+              rowIndex: editIndex,
+              /** 记录最近一次编辑记录，用于取消编辑数据回溯， */
+              ...(lastModifiedRow?.index === editIndex
+                ? {}
+                : {
+                    lastModifiedRow: origin.hasOwnProperty(PLACE_HOLDER)
+                      ? undefined
+                      : {index: editIndex, data: {...origin}}
+                  })
+            });
+            return newState;
+          }
+
           const indexes = (rowIndexes as string)
             .split('.')
             .map(item => parseInt(item, 10));
@@ -1820,6 +1807,7 @@ export default class FormTable<
 
         Object.assign(newState, {
           items,
+          rowIndex: rowIndexes as string,
           ...this.transformState(items, state)
         });
         callback = this.lazyEmitValue;
@@ -1948,6 +1936,10 @@ export default class FormTable<
     return disabled || !!this.state.editIndex;
   }
 
+  filterItemIndex(index: number | string) {
+    return this.convertToRawPath(index as string);
+  }
+
   render() {
     const {
       className,
@@ -1979,7 +1971,8 @@ export default class FormTable<
       footerAddBtn,
       toolbarClassName,
       onEvent,
-      testIdBuilder
+      testIdBuilder,
+      showIndex
     } = this.props;
     const maxLength = this.resolveVariableProps(this.props, 'maxLength');
 
@@ -1989,6 +1982,7 @@ export default class FormTable<
 
     const query = this.state.query;
     const filteredItems = this.state.filteredItems;
+    const items = this.state.items;
     let showPager = typeof perPage === 'number';
     let page = this.state.page || 1;
 
@@ -2012,7 +2006,8 @@ export default class FormTable<
             affixRow,
             autoFillHeight,
             tableContentClassName,
-            onEvent
+            onEvent,
+            showIndex
           },
           {
             ref: this.tableRef,
@@ -2041,7 +2036,8 @@ export default class FormTable<
             onQuery: this.handleTableQuery,
             query: query,
             orderBy: query?.orderBy,
-            orderDir: query?.orderDir
+            orderDir: query?.orderDir,
+            filterItemIndex: this.filterItemIndex
           }
         )}
         {footerAddBtnVisible || showPager ? (
